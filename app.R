@@ -51,7 +51,6 @@ ui <- navbarPage(
 
 
 
-
 server <- function(input, output, session) {
   
   output$table1 <- DT::renderDataTable({
