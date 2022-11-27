@@ -1,3 +1,4 @@
+library(DBI)
 library(RPostgres)
 library(DT)
 library(shiny)
@@ -47,3 +48,57 @@ ui <- navbarPage(
            )
   )
 )
+
+
+
+
+server <- function(input, output, session) {
+  
+  output$table1 <- DT::renderDataTable({
+    query <- sqlInterpolate(ANSI(),
+                            "SELECT * from postgraduates 
+                              WHERE last_year 
+                              BETWEEN ?year_min and ?year_max;",
+                            year_min = input$year_selector[1],
+                            year_max = input$year_selector[2])
+    outp <- dbGetQuery(con, query)
+    ret <- DT::datatable(outp)
+    return(ret)
+  })
+  output$table2 <- DT::renderDataTable({
+    query <- sqlInterpolate(ANSI(),
+                            "SELECT * from sotrudniki
+                             WHERE department_number IN (?numb);", 
+                            numb = input$"checkGroup")
+    
+    outp <- dbGetQuery(con, query)
+    ret <- DT::datatable(outp)
+    return(ret)
+  })
+}
+
+shinyApp(ui = ui, server = server)
+
+# library(shiny)
+# 
+# ui <- navbarPage(
+#   "Page title",
+#   tabPanel("panel 1", "one"),
+#   tabPanel("panel 2", "two"),
+#   tabPanel("panel 3", "three"),
+#   navbarMenu("subpanels",
+#              tabPanel("panel 4a", "four-a"),
+#              tabPanel("panel 4b", "four-b"),
+#              tabPanel("panel 4c", "four-c")
+#   )
+# )
+# 
+# # Define server logic required to draw a histogram
+# server <- function(input, output) {
+# 
+#     
+# }
+# 
+# # Run the application 
+# shinyApp(ui = ui, server = server)
+#fhfhyfhufhuf
