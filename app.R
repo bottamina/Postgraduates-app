@@ -84,10 +84,10 @@ ui <- navbarPage(
 server <- function(input, output, session) {
   
   output$table1 <- DT::renderDataTable({
-    query <- sqlInterpolate(ANSI(),
-                            "SELECT * from postgraduates 
-                              WHERE last_year 
-                              BETWEEN ?year_min and ?year_max;",
+    sql_1 <- "SELECT * from postgraduates 
+           WHERE last_year 
+           BETWEEN ?year_min and ?year_max;"
+    query <- sqlInterpolate(ANSI(), sql_1,
                             year_min = input$year_selector[1],
                             year_max = input$year_selector[2]
     )
@@ -96,9 +96,9 @@ server <- function(input, output, session) {
     return(ret)
   })
   output$table2 <- DT::renderDataTable({
-    query <- sqlInterpolate(ANSI(),
-                            "SELECT * from sotrudniki
-                             WHERE department_number IN (?numb);", 
+    sql_2 <- "SELECT * from sotrudniki
+            WHERE department_number IN (?numb);"
+    query <- sqlInterpolate(ANSI(), sql_2, 
                             numb = input$"checkGroup")
     
     outp <- dbGetQuery(con, query)
@@ -106,9 +106,9 @@ server <- function(input, output, session) {
     return(ret)
   })
   output$table3 <- DT::renderDataTable({
-    query <- sqlInterpolate(ANSI(),
-                            "SELECT * from subjects
-                             WHERE grade_tipe IN (?subj);", 
+    sql_3 <- "SELECT * from subjects
+            WHERE grade_tipe IN (?subj);"
+    query <- sqlInterpolate(ANSI(), sql_3, 
                             subj = input$"checkGroup_sub")
     
     outp <- dbGetQuery(con, query)
@@ -116,10 +116,10 @@ server <- function(input, output, session) {
     return(ret)
   })
   output$table4 <- DT::renderDataTable({
-    query <- sqlInterpolate(ANSI(),
-                            "SELECT * from dissertations 
-                              WHERE h_index 
-                              BETWEEN ?hindex_min and ?hindex_max;",
+    sql_4 <- "SELECT * from dissertations 
+             WHERE h_index 
+             BETWEEN ?hindex_min and ?hindex_max;"
+    query <- sqlInterpolate(ANSI(), sql_4,
                             hindex_min = input$dis_selector[1],
                             hindex_max = input$dis_selector[2])
     outp <- dbGetQuery(con, query)
