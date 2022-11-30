@@ -15,6 +15,8 @@ maxmin_pos <- c(dbGetQuery(con,
                            "SELECT MAX(last_year), MIN(last_year) from postgraduates;"))
 maxmin_dep <- c(dbGetQuery(con,
                            "SELECT MAX(department_number), MIN(department_number) from sotrudniki;"))
+maxmin_hindex <- c(dbGetQuery(con,
+                              "SELECT MAX(h_index), MIN(h_index) from dissertations;"))
 
 ui <- navbarPage(
   
@@ -46,8 +48,36 @@ ui <- navbarPage(
                DT::dataTableOutput("table2")
              )
            )
+  ),
+  tabPanel("Предметы",
+           sidebarLayout(
+             sidebarPanel(
+               checkboxGroupInput("checkGroup_sub", label = "Предметы",
+                                  choices = list("Экзамен", "Рейтинг", "Зачет"), 
+                                  selected = "Экзамен")
+             ),
+             mainPanel(
+               DT::dataTableOutput("table3")
+             )
+           )
+  ),
+  tabPanel("Диссертации",
+           sidebarLayout(
+             sidebarPanel(
+               sliderInput("dis_selector","Индекс Хирша",       
+                           min = maxmin_hindex$min,
+                           max = maxmin_hindex$max,
+                           value = c(maxmin_hindex$min, maxmin_hindex$max),
+                           step = 1
+               )
+             ),
+             mainPanel(
+               DT::dataTableOutput("table4")
+             )
+           )
   )
 )
+
 
 
 
@@ -59,7 +89,8 @@ server <- function(input, output, session) {
                               WHERE last_year 
                               BETWEEN ?year_min and ?year_max;",
                             year_min = input$year_selector[1],
-                            year_max = input$year_selector[2])
+                            year_max = input$year_selector[2]
+    )
     outp <- dbGetQuery(con, query)
     ret <- DT::datatable(outp)
     return(ret)
@@ -70,6 +101,27 @@ server <- function(input, output, session) {
                              WHERE department_number IN (?numb);", 
                             numb = input$"checkGroup")
     
+    outp <- dbGetQuery(con, query)
+    ret <- DT::datatable(outp)
+    return(ret)
+  })
+  output$table3 <- DT::renderDataTable({
+    query <- sqlInterpolate(ANSI(),
+                            "SELECT * from subjects
+                             WHERE grade_tipe IN (?subj);", 
+                            subj = input$"checkGroup_sub")
+    
+    outp <- dbGetQuery(con, query)
+    ret <- DT::datatable(outp)
+    return(ret)
+  })
+  output$table4 <- DT::renderDataTable({
+    query <- sqlInterpolate(ANSI(),
+                            "SELECT * from dissertations 
+                              WHERE h_index 
+                              BETWEEN ?hindex_min and ?hindex_max;",
+                            hindex_min = input$dis_selector[1],
+                            hindex_max = input$dis_selector[2])
     outp <- dbGetQuery(con, query)
     ret <- DT::datatable(outp)
     return(ret)
