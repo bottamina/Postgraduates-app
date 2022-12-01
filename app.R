@@ -92,60 +92,56 @@ server <- function(input, output, session) {
   output$table1 <- DT::renderDataTable({
     
     sql_1 <- "SELECT * from postgraduates 
-              WHERE last_year 
-              BETWEEN ?year_min and ?year_max
-              AND id_spec IN (?spec);"
+           WHERE last_year 
+           BETWEEN ?year_min and ?year_max
+           AND id_spec IN (?spec);"
     
     if (is.null(input$checkGroup_pos))          
       query <- sqlInterpolate(ANSI(), "SELECT * from postgraduates;")
     
-    
     else {query <- sqlInterpolate(ANSI(), sql_1,
                             year_min = input$year_selector[1],
                             year_max = input$year_selector[2],
-                            spec = input$checkGroup_pos
-    )}
+                            spec = input$checkGroup_pos)
+    }
     outp <- dbGetQuery(con, query)
     ret <- DT::datatable(outp)
     return(ret)
   })
   output$table2 <- DT::renderDataTable({
     sql_2 <- "SELECT * from sotrudniki
-              WHERE department_number IN (?numb)
-              AND degree IN (?deg);"
+            WHERE department_number IN (?numb)
+            AND degree IN (?deg);"
     
-    if (is.null(input$checkGroup))          
-      query <- sqlInterpolate(ANSI(), "SELECT * from sotrudniki;")
-    
-    else if (is.null(input$checkGroup_sot))          
+    if (is.null(input$checkGroup) | is.null(input$checkGroup_sot))          
       query <- sqlInterpolate(ANSI(), "SELECT * from sotrudniki;")
     
     else {query <- sqlInterpolate(ANSI(), sql_2, 
                             numb = input$checkGroup,
-                            deg = input$checkGroup_sot)}
-    
+                            deg = input$checkGroup_sot)
+    }
     outp <- dbGetQuery(con, query)
     ret <- DT::datatable(outp)
     return(ret)
   })
   output$table3 <- DT::renderDataTable({
     sql_3 <- "SELECT * from subjects
-              WHERE grade_tipe IN (?subj);"
+            WHERE grade_tipe IN (?subj);"
     
     if (is.null(input$checkGroup_sub))          
       query <- sqlInterpolate(ANSI(), "SELECT * from subjects;")
     
     else {query <- sqlInterpolate(ANSI(), sql_3, 
-                            subj = input$checkGroup_sub)}
-    
+                            subj = input$checkGroup_sub)
+    }
     outp <- dbGetQuery(con, query)
     ret <- DT::datatable(outp)
     return(ret)
   })
   output$table4 <- DT::renderDataTable({
     sql_4 <- "SELECT * from dissertations 
-              WHERE h_index 
-              BETWEEN ?hindex_min and ?hindex_max;"
+             WHERE h_index 
+             BETWEEN ?hindex_min and ?hindex_max;"
     
     query <- sqlInterpolate(ANSI(), sql_4,
                             hindex_min = input$dis_selector[1],
