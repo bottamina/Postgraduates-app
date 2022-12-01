@@ -30,7 +30,10 @@ ui <- navbarPage(
                            max = maxmin_pos$max,
                            value = c(maxmin_pos$min, maxmin_pos$max),
                            step = 1
-               )
+               ),
+               checkboxGroupInput("checkGroup_pos", label = "Код специальности",
+                                  choices = list("01.01.00", "01.02.00", "01.03.00"), 
+                                  selected = "01.01.00")
              ),
              mainPanel(
                DT::dataTableOutput("table1")
@@ -42,7 +45,10 @@ ui <- navbarPage(
              sidebarPanel(
                checkboxGroupInput("checkGroup", label = "Кафедры",
                                   choices = list(801, 802, 804, 805, 806), 
-                                  selected = 801)
+                                  selected = 801),
+               checkboxGroupInput("checkGroup_sot", label = "Учёная степень",
+                                  choices = list("Доктор", "Кандидат"), 
+                                  selected = "Доктор")
              ),
              mainPanel(
                DT::dataTableOutput("table2")
@@ -86,10 +92,13 @@ server <- function(input, output, session) {
   output$table1 <- DT::renderDataTable({
     sql_1 <- "SELECT * from postgraduates 
            WHERE last_year 
-           BETWEEN ?year_min and ?year_max;"
+           BETWEEN ?year_min and ?year_max
+           AND id_spec IN (?spec);"
+    
     query <- sqlInterpolate(ANSI(), sql_1,
                             year_min = input$year_selector[1],
-                            year_max = input$year_selector[2]
+                            year_max = input$year_selector[2],
+                            spec = input$"checkGroup_pos"
     )
     outp <- dbGetQuery(con, query)
     ret <- DT::datatable(outp)
@@ -97,9 +106,12 @@ server <- function(input, output, session) {
   })
   output$table2 <- DT::renderDataTable({
     sql_2 <- "SELECT * from sotrudniki
-            WHERE department_number IN (?numb);"
+            WHERE department_number IN (?numb)
+            AND degree IN (?deg);"
+    
     query <- sqlInterpolate(ANSI(), sql_2, 
-                            numb = input$"checkGroup")
+                            numb = input$"checkGroup",
+                            deg = input$"checkGroup_sot")
     
     outp <- dbGetQuery(con, query)
     ret <- DT::datatable(outp)
@@ -108,6 +120,7 @@ server <- function(input, output, session) {
   output$table3 <- DT::renderDataTable({
     sql_3 <- "SELECT * from subjects
             WHERE grade_tipe IN (?subj);"
+    
     query <- sqlInterpolate(ANSI(), sql_3, 
                             subj = input$"checkGroup_sub")
     
@@ -119,6 +132,7 @@ server <- function(input, output, session) {
     sql_4 <- "SELECT * from dissertations 
              WHERE h_index 
              BETWEEN ?hindex_min and ?hindex_max;"
+    
     query <- sqlInterpolate(ANSI(), sql_4,
                             hindex_min = input$dis_selector[1],
                             hindex_max = input$dis_selector[2])
