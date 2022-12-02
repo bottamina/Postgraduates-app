@@ -21,6 +21,8 @@ maxmin_ids <- c(dbGetQuery(con,
                            "SELECT MAX(id_sotr), MIN(id_sotr) from sotrudniki;"))
 maxmin_idp <- c(dbGetQuery(con,
                            "SELECT MAX(id_postgr), MIN(id_postgr) from postgraduates;"))
+maxmin_ida <- c(dbGetQuery(con,
+                           "SELECT MAX(id_author), MIN(id_author) from dissertations;"))
 
 ui <- navbarPage(
   
@@ -79,7 +81,7 @@ ui <- navbarPage(
                                           "Математическая кибернетика",
                                           "Теория вероятностей и компьютерное моделирование",
                                           "Мехатроника и теоретическая механика"), 
-                           selected = 1),
+                           selected = 1)
              ),
              mainPanel(
                DT::dataTableOutput("table2")
@@ -91,7 +93,10 @@ ui <- navbarPage(
              sidebarPanel(
                selectInput("checkGroup_sub", label = "Предметы",
                                   choices = list("Все типы" = 1, "Экзамен", "Рейтинг", "Зачет"), 
-                                  selected = 1)
+                                  selected = 1),
+               selectInput("checkGroup_hours", label = "Количество учебных часов",
+                           choices = list("Все варианты" = 1, "72", "108", "144", "162", "180", "216"), 
+                           selected = 1)
              ),
              mainPanel(
                DT::dataTableOutput("table3")
@@ -106,7 +111,13 @@ ui <- navbarPage(
                            max = maxmin_hindex$max,
                            value = c(maxmin_hindex$min, maxmin_hindex$max),
                            step = 1
-               )
+               ),
+               sliderInput("idauthor_selector", "id автора диссертации",       
+                           min = maxmin_ida$min,
+                           max = maxmin_ida$max,
+                           value = c(maxmin_ida$min, maxmin_ida$max),
+                           step = 1
+               ),
              ),
              mainPanel(
                DT::dataTableOutput("table4")
@@ -201,13 +212,24 @@ server <- function(input, output, session) {
   })
   output$table3 <- DT::renderDataTable({
     sql_3 <- "SELECT * from subjects
-            WHERE grade_tipe IN (?subj);"
+            WHERE grade_tipe IN (?subj)
+            AND study_hours IN (?hours);"
     
-    if (input$checkGroup_sub == 1)
+    if ((input$checkGroup_sub == 1) & (input$checkGroup_hours == 1))
       query <- sqlInterpolate(ANSI(), "SELECT * from subjects;")
     
+    else if (input$checkGroup_sub == 1)
+      query <- sqlInterpolate(ANSI(), "SELECT * from subjects
+                                      WHERE study_hours IN (?hours);",
+                                      hours = input$checkGroup_hours)
+    else if (input$checkGroup_hours == 1)
+      query <- sqlInterpolate(ANSI(), "SELECT * from subjects
+                                      WHERE grade_tipe IN (?subj);",
+                                      subj = input$checkGroup_sub)
+    
     else {query <- sqlInterpolate(ANSI(), sql_3, 
-                                  subj = input$checkGroup_sub)
+                                  subj = input$checkGroup_sub,
+                                  hours = input$checkGroup_hours)
       }
     outp <- dbGetQuery(con, query)
     ret <- DT::datatable(outp)
@@ -216,11 +238,15 @@ server <- function(input, output, session) {
   output$table4 <- DT::renderDataTable({
     sql_4 <- "SELECT * from dissertations 
              WHERE h_index 
-             BETWEEN ?hindex_min and ?hindex_max;"
+             BETWEEN ?hindex_min and ?hindex_max
+             AND id_author
+             BETWEEN ?ida_min and ?ida_max;"
     
     query <- sqlInterpolate(ANSI(), sql_4,
                             hindex_min = input$dis_selector[1],
-                            hindex_max = input$dis_selector[2])
+                            hindex_max = input$dis_selector[2],
+                            ida_min = input$idauthor_selector[1],
+                            ida_max = input$idauthor_selector[2])
     outp <- dbGetQuery(con, query)
     ret <- DT::datatable(outp)
     return(ret)
