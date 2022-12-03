@@ -27,7 +27,7 @@ maxmin_ida <- c(dbGetQuery(con,
 ui <- navbarPage(
   
   theme = bslib::bs_theme(bootswatch = "minty"),
-  "База данных 'Аспиранты'",
+  "База данных \"Аспиранты\"",
   tabPanel("Аспиранты",
            sidebarLayout(
              sidebarPanel(
@@ -60,7 +60,13 @@ ui <- navbarPage(
                            min = maxmin_idp$min,
                            max = maxmin_idp$max,
                            value = c(maxmin_idp$min, maxmin_idp$max),
-                           step = 2)
+                           step = 2),
+               textInput("post1", "ID"),
+               textInput("post2", "Имя и фамилия"),
+               textInput("post3", "Год окончания"),
+               textInput("post4", "ID научного руководителя"),
+               textInput("post5", "Код специальноси"),
+               actionButton("do_post", "Добавить запись")
              ),
              mainPanel(
                DT::dataTableOutput("table1")
@@ -81,7 +87,15 @@ ui <- navbarPage(
                                           "Математическая кибернетика",
                                           "Теория вероятностей и компьютерное моделирование",
                                           "Мехатроника и теоретическая механика"), 
-                           selected = 1)
+                           selected = 1),
+               textInput("sot1", "ID"),
+               textInput("sot2", "Номер кафедры"),
+               textInput("sot3", "Фамилия и имя"),
+               textInput("sot4", "Название кафедры"),
+               textInput("sot5", "Ученая степень"),
+               textInput("sot6", "Email"),
+               textInput("sot7", "ID руководителя"),
+               actionButton("do_sot", "Добавить запись")
              ),
              mainPanel(
                DT::dataTableOutput("table2")
@@ -91,12 +105,17 @@ ui <- navbarPage(
   tabPanel("Предметы",
            sidebarLayout(
              sidebarPanel(
-               selectInput("checkGroup_sub", label = "Предметы",
-                                  choices = list("Все типы" = 1, "Экзамен", "Рейтинг", "Зачет"), 
-                                  selected = 1),
+               selectInput("checkGroup_sub", label = "Тип оценивания",
+                           choices = list("Все типы" = 1, "Экзамен", "Рейтинг", "Зачет"), 
+                           selected = 1),
                selectInput("checkGroup_hours", label = "Количество учебных часов",
                            choices = list("Все варианты" = 1, "72", "108", "144", "162", "180", "216"), 
-                           selected = 1)
+                           selected = 1),
+               textInput("subj1", "ID"),
+               textInput("subj2", "Количество учебных часов"),
+               textInput("subj3", "Тип оценивания"),
+               textInput("subj4", "Название предмета"),
+               actionButton("do_subj", "Добавить запись")
              ),
              mainPanel(
                DT::dataTableOutput("table3")
@@ -118,6 +137,11 @@ ui <- navbarPage(
                            value = c(maxmin_ida$min, maxmin_ida$max),
                            step = 1
                ),
+               textInput("dis1", "ID"),
+               textInput("dis2", "ID автора"),
+               textInput("dis3", "Название диссертации"),
+               textInput("dis4", "Индекс Хирша"),
+               actionButton("do_dis", "Добавить запись")
              ),
              mainPanel(
                DT::dataTableOutput("table4")
@@ -221,16 +245,16 @@ server <- function(input, output, session) {
     else if (input$checkGroup_sub == 1)
       query <- sqlInterpolate(ANSI(), "SELECT * from subjects
                                       WHERE study_hours IN (?hours);",
-                                      hours = input$checkGroup_hours)
+                              hours = input$checkGroup_hours)
     else if (input$checkGroup_hours == 1)
       query <- sqlInterpolate(ANSI(), "SELECT * from subjects
                                       WHERE grade_tipe IN (?subj);",
-                                      subj = input$checkGroup_sub)
+                              subj = input$checkGroup_sub)
     
     else {query <- sqlInterpolate(ANSI(), sql_3, 
                                   subj = input$checkGroup_sub,
                                   hours = input$checkGroup_hours)
-      }
+    }
     outp <- dbGetQuery(con, query)
     ret <- DT::datatable(outp)
     return(ret)
@@ -251,6 +275,24 @@ server <- function(input, output, session) {
     ret <- DT::datatable(outp)
     return(ret)
   })
+  observeEvent(input$do_sot, {
+    dbExecute(con, "INSERT INTO sotrudniki VALUES ($1, $2, $3, $4, $5, $6, $7)",
+              params = list(input$sot1, input$sot2, input$sot3, input$sot4, input$sot5, input$sot6, input$sot7))
+  })
+  observeEvent(input$do_subj, {
+    dbExecute(con, "INSERT INTO subjects VALUES ($1, $2, $3, $4)",
+              params = list(input$subj1, input$subj2, input$subj3, input$subj4))
+  })
+  observeEvent(input$do_dis, {
+    dbExecute(con, "INSERT INTO dissertations VALUES ($1, $2, $3, $4)",
+              params = list(input$dis1, input$dis2, input$dis3, input$dis4))
+  })
+  observeEvent(input$do_post, {
+    dbExecute(con, "INSERT INTO postgraduates VALUES ($1, $2, $3, $4, $5)",
+              params = list(input$post1, input$post2, input$post3, input$post4, input$post5))
+    
+  })
+  
 }
 
 shinyApp(ui = ui, server = server)
