@@ -222,7 +222,11 @@ server <- function(input, output, session) {
             AND department_name IN (?kaf);"
     
     if (input$checkGroup_sot == 1)
-      query <- sqlInterpolate(ANSI(), "SELECT * from sotrudniki;")
+      query <- sqlInterpolate(ANSI(), "SELECT * from sotrudniki
+                                      WHERE department_number
+                                      BETWEEN ?numb_min and ?numb_max;",
+                                      numb_min = input$checkGroup[1],
+                                      numb_max = input$checkGroup[2])
     
     else {query <- sqlInterpolate(ANSI(), sql_2, 
                                   numb_min = input$checkGroup[1],
